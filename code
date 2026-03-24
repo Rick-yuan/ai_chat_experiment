@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI聊天实验</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .ai-avatar {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .header-info h1 {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+
+        .header-info p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .message.ai .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .message.user .message-avatar {
+            background: #2d3748;
+            color: white;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 15px 20px;
+            border-radius: 18px;
+            line-height: 1.6;
+            font-size: 15px;
+        }
+
+        .message.ai .message-content {
+            background: white;
+            color: #2d3748;
+            border: 1px solid #e2e8f0;
+        }
+
+        .message.user .message-content {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .typing-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #667eea;
+            border-radius: 50%;
+            margin-left: 5px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% {
+                opacity: 1;
+            }
+            51%, 100% {
+                opacity: 0;
+            }
+        }
+
+        .chat-input-area {
+            padding: 25px 30px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .teacher-container {
+            width: 100%;
+            max-width: 800px;
+            height: 90vh;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            display: none;
+        }
+
+        .teacher-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .teacher-avatar {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .teacher-content {
+            flex: 1;
+            padding: 50px;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .teacher-message {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            margin-bottom: 40px;
+            max-width: 80%;
+        }
+
+        .teacher-message p {
+            font-size: 18px;
+            line-height: 1.8;
+            color: #2d3748;
+            margin-bottom: 20px;
+        }
+
+        .teacher-message .signature {
+            font-style: italic;
+            color: #718096;
+            text-align: right;
+        }
+
+        .acknowledge-btn {
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 20px;
+        }
+
+        .acknowledge-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .input-wrapper {
+            flex: 1;
+            position: relative;
+        }
+
+        #userInput {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        #userInput:focus {
+            border-color: #667eea;
+        }
+
+        #sendBtn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #sendBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        #sendBtn:active {
+            transform: translateY(0);
+        }
+
+        #sendBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-messages::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        .thinking-message {
+            color: #a0aec0;
+            font-size: 12px;
+            font-style: italic;
+            padding: 10px 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .thinking-dots {
+            animation: pulse 1.5s infinite;
+        }
+
+        .student-info-container {
+            width: 100%;
+            max-width: 600px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 50px 40px;
+        }
+
+        .student-info-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .student-info-header h2 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .student-info-header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #2d3748;
+            font-size: 15px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.3s;
+            font-family: inherit;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 20px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .student-form-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 30px;
+        }
+
+        .student-form-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .student-form-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .start-test-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 25px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .start-test-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .student-error-message {
+            color: #e53e3e;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 15px;
+            display: none;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-header h3 {
+            color: #2d3748;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .modal-header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .modal-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .modal-option {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 15px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-option:hover {
+            border-color: #667eea;
+            background: #f8f9fa;
+        }
+
+        .modal-option.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .modal-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .modal-btn.secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .modal-btn.secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .survey-container {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            background: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            margin: 0 auto;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            align-self: flex-start;
+        }
+
+        .survey-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .survey-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        .survey-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        .survey-container::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        .survey-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .survey-header h2 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .survey-header p {
+            color: #718096;
+            font-size: 14px;
+        }
+
+        .survey-question {
+            margin-bottom: 35px;
+            padding: 25px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+
+        .survey-question h3 {
+            color: #2d3748;
+            font-size: 16px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .rating-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .rating-option {
+            flex: 1;
+            text-align: center;
+        }
+
+        .rating-option input[type="radio"] {
+            display: none;
+        }
+
+        .rating-option label {
+            display: block;
+            padding: 12px 8px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+            font-weight: 600;
+            color: #718096;
+        }
+
+        .rating-option input[type="radio"]:checked + label {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .rating-option label:hover {
+            border-color: #667eea;
+        }
+
+        .rating-scale {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            padding: 0 10px;
+            font-size: 12px;
+            color: #718096;
+        }
+
+        .survey-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 40px;
+        }
+
+        .survey-btn {
+            padding: 15px 40px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .back-btn {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .back-btn:hover {
+            background: #cbd5e0;
+        }
+
+        .error-message {
+            color: #e53e3e;
+            font-size: 14px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .success-message {
+            color: #38a169;
+            font-size: 16px;
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="student-info-container" id="studentInfoContainer">
+        <div class="student-info-header">
+            <h2>学生信息登记</h2>
+            <p>请填写以下信息后开始测试</p>
+        </div>
+
+        <form id="studentInfoForm">
+            <div class="form-group">
+                <label for="studentId">学号</label>
+                <input type="text" id="studentId" name="studentId" placeholder="请输入学号" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="gender">性别</label>
+                    <select id="gender" name="gender" required>
+                        <option value="">请选择</option>
+                        <option value="男">男</option>
+                        <option value="女">女</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="age">年龄</label>
+                    <input type="number" id="age" name="age" placeholder="请输入年龄" min="1" max="100" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="className">班级</label>
+                <input type="text" id="className" name="className" placeholder="请输入班级" required>
+            </div>
+
+            <button type="submit" class="student-form-btn">开始测试</button>
+        </form>
+
+        <div class="student-error-message" id="studentErrorMessage">请完整填写所有信息</div>
+    </div>
+
+    <div class="chat-container" id="chatContainer" style="display: none;">
+        <div class="chat-header">
+            <div class="ai-avatar">AI</div>
+            <div class="header-info">
+                <h1>kimi AI助手</h1>
+                <p>在线 · 随时为您服务</p>
+            </div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+        </div>
+        
+        <div class="chat-input-area">
+            <div class="input-wrapper">
+                <input type="text" id="userInput" value="如何快速消解耳鸣？" autocomplete="off" readonly style="background: #f8f9fa; color: #2d3748;">
+            </div>
+            <button id="sendBtn">发送</button>
+        </div>
+        
+        <div style="padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <button class="acknowledge-btn" id="aiAcknowledgeBtn">我已知晓</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="instructionModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>选择讲解方式</h3>
+                <p>关于“如何消解耳鸣？”这一问题，请选择您希望首先了解的讲解方式。</p>
+            </div>
+            <div class="modal-options">
+                <div class="modal-option" data-value="教师讲解">
+                    <input type="radio" name="instruction" value="教师讲解" id="instruction1" style="display: none;">
+                    <label for="instruction1">教师讲解</label>
+                </div>
+                <div class="modal-option" data-value="AI讲解">
+                    <input type="radio" name="instruction" value="AI讲解" id="instruction2" style="display: none;">
+                    <label for="instruction2">AI讲解</label>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="modalCancel">取消</button>
+                <button class="modal-btn primary" id="modalConfirm">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="teacher-container" id="teacherContainer">
+        <div class="teacher-header">
+            <div class="teacher-avatar">教师</div>
+            <div class="header-info">
+                <h1>教师讲解</h1>
+                <p>专业指导 · 详细解答</p>
+            </div>
+        </div>
+        
+        <div class="teacher-content">
+            <div class="teacher-message">
+                <p>由于太阳穴的血供和耳朵存在联系，按住太阳穴可以减少血液对耳朵神经的供给，重置耳朵的状态。因此按太阳穴一段时间以后耳鸣即可消失。</p>
+                <p class="signature">— 李子奇段长</p>
+            </div>
+            <div style="display: flex; gap: 15px; margin-top: 30px;">
+                <button class="acknowledge-btn" id="teacherAcknowledgeBtn">我已知晓</button>
+                <button class="start-test-btn" id="teacherStartTestBtn" style="display: none;">开始测试</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="start-test-btn" id="startTestBtn" style="display: none;">开始测试</button>
+
+    <div class="survey-container" id="surveyContainer">
+        <div class="survey-header">
+            <h2>AI系统信任度调查问卷</h2>
+            <p>请根据您的真实感受，对以下陈述进行评分（1-7分）</p>
+        </div>
+
+        <form id="surveyForm">
+            <div class="survey-question">
+                <h3>1. 你认为应该如何快速消除耳鸣？</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="q0_1" value="1" id="q0_1-1">
+                        <label for="q0_1-1">按住太阳穴一段时间后即可消除耳鸣</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q0_1" value="2" id="q0_1-2">
+                        <label for="q0_1-2">张开嘴巴以后耳鸣即可消除耳鸣</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>2. 你平时使用AI助手吗？使用的频率如何？</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="q0_2" value="1" id="q0_2-1">
+                        <label for="q0_2-1">从未使用过</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q0_2" value="2" id="q0_2-2">
+                        <label for="q0_2-2">极少使用，每月1-2次</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q0_2" value="3" id="q0_2-3">
+                        <label for="q0_2-3">偶尔使用，每周1-2次</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q0_2" value="4" id="q0_2-4">
+                        <label for="q0_2-4">经常使用，每周3-4次</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q0_2" value="5" id="q0_2-5">
+                        <label for="q0_2-5">每天都会使用</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>3. 鉴于AI系统以往的表现，我不会质疑它的帮助学习的能力</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="q1" value="1" id="q1-1">
+                        <label for="q1-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q1" value="2" id="q1-2">
+                        <label for="q1-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q1" value="3" id="q1-3">
+                        <label for="q1-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q1" value="4" id="q1-4">
+                        <label for="q1-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q1" value="5" id="q1-5">
+                        <label for="q1-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q1" value="6" id="q1-6">
+                        <label for="q1-6">6</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q1" value="7" id="q1-7">
+                        <label for="q1-7">7</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>非常不同意</span>
+                    <span>非常同意</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>4. 我相信不会因为AI系统的失误导致我的学习变得更加困难</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="q2" value="1" id="q2-1">
+                        <label for="q2-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q2" value="2" id="q2-2">
+                        <label for="q2-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q2" value="3" id="q2-3">
+                        <label for="q2-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q2" value="4" id="q2-4">
+                        <label for="q2-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q2" value="5" id="q2-5">
+                        <label for="q2-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q2" value="6" id="q2-6">
+                        <label for="q2-6">6</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q2" value="7" id="q2-7">
+                        <label for="q2-7">7</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>非常不同意</span>
+                    <span>非常同意</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>5. 大多数人，甚至没有与AI系统密切接触的人，都信任并认可它是学习伙伴</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="q3" value="1" id="q3-1">
+                        <label for="q3-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q3" value="2" id="q3-2">
+                        <label for="q3-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q3" value="3" id="q3-3">
+                        <label for="q3-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q3" value="4" id="q3-4">
+                        <label for="q3-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q3" value="5" id="q3-5">
+                        <label for="q3-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q3" value="6" id="q3-6">
+                        <label for="q3-6">6</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q3" value="7" id="q3-7">
+                        <label for="q3-7">7</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>非常不同意</span>
+                    <span>非常同意</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>6. 我身边的其他必须与AI系统打交道的同学认为它是值得信任的</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="q4" value="1" id="q4-1">
+                        <label for="q4-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q4" value="2" id="q4-2">
+                        <label for="q4-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q4" value="3" id="q4-3">
+                        <label for="q4-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q4" value="4" id="q4-4">
+                        <label for="q4-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q4" value="5" id="q4-5">
+                        <label for="q4-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q4" value="6" id="q4-6">
+                        <label for="q4-6">6</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q4" value="7" id="q4-7">
+                        <label for="q4-7">7</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>非常不同意</span>
+                    <span>非常同意</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>7. 如果人们更多的了解 AI系统(例如:它是怎么运行的、结果是怎么产生的等)，他们会更加关心和关注它的表现</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="q5" value="1" id="q5-1">
+                        <label for="q5-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q5" value="2" id="q5-2">
+                        <label for="q5-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q5" value="3" id="q5-3">
+                        <label for="q5-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q5" value="4" id="q5-4">
+                        <label for="q5-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q5" value="5" id="q5-5">
+                        <label for="q5-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q5" value="6" id="q5-6">
+                        <label for="q5-6">6</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q5" value="7" id="q5-7">
+                        <label for="q5-7">7</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>非常不同意</span>
+                    <span>非常同意</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>8. 我相信AI系统的使用将提高我的学习质量</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="q6" value="1" id="q6-1">
+                        <label for="q6-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q6" value="2" id="q6-2">
+                        <label for="q6-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q6" value="3" id="q6-3">
+                        <label for="q6-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q6" value="4" id="q6-4">
+                        <label for="q6-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q6" value="5" id="q6-5">
+                        <label for="q6-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q6" value="6" id="q6-6">
+                        <label for="q6-6">6</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="q6" value="7" id="q6-7">
+                        <label for="q6-7">7</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>非常不同意</span>
+                    <span>非常同意</span>
+                </div>
+            </div>
+
+            <div style="margin: 40px 0; padding: 30px; background: #f0f4ff; border-radius: 12px; border-left: 4px solid #667eea;">
+                <h3 style="color: #2d3748; font-size: 18px; margin-bottom: 15px;">性格特点调查</h3>
+                <p style="color: #4a5568; font-size: 14px; line-height: 1.8;">
+                    下面是一些描述人们性格特点的句子，请根据每个句子与您的性格相符程度在相应的数字选择，例如：“在集体活动中，我是个活跃分子”非常恰当的描述您，那么请您在“6=完全同意”上做选择，依此类推。每个人的性格各不相同，所以答案没有对错之分，请根据您的实际情况作答。
+                </p>
+            </div>
+
+            <div class="survey-question">
+                <h3>9. 我头脑中经常充满生动的画面</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="p1" value="1" id="p1-1">
+                        <label for="p1-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p1" value="2" id="p1-2">
+                        <label for="p1-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p1" value="3" id="p1-3">
+                        <label for="p1-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p1" value="4" id="p1-4">
+                        <label for="p1-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p1" value="5" id="p1-5">
+                        <label for="p1-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p1" value="6" id="p1-6">
+                        <label for="p1-6">6</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>完全不符合</span>
+                    <span>完全符合</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>10. 我是个勇于冒险，突破常规的人</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="p2" value="1" id="p2-1">
+                        <label for="p2-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p2" value="2" id="p2-2">
+                        <label for="p2-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p2" value="3" id="p2-3">
+                        <label for="p2-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p2" value="4" id="p2-4">
+                        <label for="p2-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p2" value="5" id="p2-5">
+                        <label for="p2-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p2" value="6" id="p2-6">
+                        <label for="p2-6">6</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>完全不符合</span>
+                    <span>完全符合</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>11. 我喜欢冒险</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="p3" value="1" id="p3-1">
+                        <label for="p3-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p3" value="2" id="p3-2">
+                        <label for="p3-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p3" value="3" id="p3-3">
+                        <label for="p3-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p3" value="4" id="p3-4">
+                        <label for="p3-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p3" value="5" id="p3-5">
+                        <label for="p3-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p3" value="6" id="p3-6">
+                        <label for="p3-6">6</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>完全不符合</span>
+                    <span>完全符合</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>12. 我对许多事情有着很强的好奇心</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="p4" value="1" id="p4-1">
+                        <label for="p4-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p4" value="2" id="p4-2">
+                        <label for="p4-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p4" value="3" id="p4-3">
+                        <label for="p4-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p4" value="4" id="p4-4">
+                        <label for="p4-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p4" value="5" id="p4-5">
+                        <label for="p4-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p4" value="6" id="p4-6">
+                        <label for="p4-6">6</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>完全不符合</span>
+                    <span>完全符合</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>13. 我身上具有别人没有的冒险精神</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="p5" value="1" id="p5-1">
+                        <label for="p5-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p5" value="2" id="p5-2">
+                        <label for="p5-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p5" value="3" id="p5-3">
+                        <label for="p5-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p5" value="4" id="p5-4">
+                        <label for="p5-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p5" value="5" id="p5-5">
+                        <label for="p5-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p5" value="6" id="p5-6">
+                        <label for="p5-6">6</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>完全不符合</span>
+                    <span>完全符合</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>14. 我渴望学习一些新东西，即使它们与我的日常生活无关</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="p6" value="1" id="p6-1">
+                        <label for="p6-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p6" value="2" id="p6-2">
+                        <label for="p6-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p6" value="3" id="p6-3">
+                        <label for="p6-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p6" value="4" id="p6-4">
+                        <label for="p6-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p6" value="5" id="p6-5">
+                        <label for="p6-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p6" value="6" id="p6-6">
+                        <label for="p6-6">6</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>完全不符合</span>
+                    <span>完全符合</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>15. 我的想象力相当丰富</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="p7" value="1" id="p7-1">
+                        <label for="p7-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p7" value="2" id="p7-2">
+                        <label for="p7-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p7" value="3" id="p7-3">
+                        <label for="p7-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p7" value="4" id="p7-4">
+                        <label for="p7-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p7" value="5" id="p7-5">
+                        <label for="p7-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p7" value="6" id="p7-6">
+                        <label for="p7-6">6</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>完全不符合</span>
+                    <span>完全符合</span>
+                </div>
+            </div>
+
+            <div class="survey-question">
+                <h3>16. 我很愿意也很容易接受那些新事物、新观点、新想法</h3>
+                <div class="rating-options">
+                    <div class="rating-option">
+                        <input type="radio" name="p8" value="1" id="p8-1">
+                        <label for="p8-1">1</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p8" value="2" id="p8-2">
+                        <label for="p8-2">2</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p8" value="3" id="p8-3">
+                        <label for="p8-3">3</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p8" value="4" id="p8-4">
+                        <label for="p8-4">4</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p8" value="5" id="p8-5">
+                        <label for="p8-5">5</label>
+                    </div>
+                    <div class="rating-option">
+                        <input type="radio" name="p8" value="6" id="p8-6">
+                        <label for="p8-6">6</label>
+                    </div>
+                </div>
+                <div class="rating-scale">
+                    <span>完全不符合</span>
+                    <span>完全符合</span>
+                </div>
+            </div>
+
+            <div class="survey-buttons">
+                <button type="button" class="survey-btn back-btn" id="backBtn">返回聊天</button>
+                <button type="submit" class="survey-btn submit-btn" id="submitBtn">提交问卷</button>
+            </div>
+        </form>
+
+        <div class="error-message" id="errorMessage">请完成所有问题后再提交</div>
+        <div class="success-message" id="successMessage">问卷已成功保存！</div>
+    </div>
+
+    <script>
+        const aiResponses = [
+            "你好，我是本次测试的定制人工智能，请输入内容开始聊天的内容。",
+            "好的，我听清楚了你的问题，根据我在网上搜索到的信息，有人分享到张开嘴巴一段时间以后耳鸣即可消失，这可能是因为大脑在处理声音时，需要将声音转换为视觉信号，而视觉信号的处理需要时间。",
+            "由于权限限制，您无法询问更多信息，请您稍后访问"
+            ,"由于权限限制，您无法询问更多信息，请您稍后访问"
+        ];
+
+        let currentResponseIndex = 0;
+        let isTyping = false;
+
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+
+        function addMessage(content, isUser) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isUser ? 'user' : 'ai'}`;
+            
+            const avatarDiv = document.createElement('div');
+            avatarDiv.className = 'message-avatar';
+            avatarDiv.textContent = isUser ? '我' : 'AI';
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(avatarDiv);
+            messageDiv.appendChild(contentDiv);
+            chatMessages.appendChild(messageDiv);
+            
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function showThinking() {
+            const thinkingDiv = document.createElement('div');
+            thinkingDiv.className = 'thinking-message';
+            thinkingDiv.id = 'thinking-message';
+            thinkingDiv.innerHTML = '<span class="thinking-dots">正在分析“如何消解耳鸣？”中，找到12篇相关问题...</span>';
+            chatMessages.appendChild(thinkingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeThinking() {
+            const thinkingMessage = document.getElementById('thinking-message');
+            if (thinkingMessage) {
+                thinkingMessage.remove();
+            }
+        }
+
+        function typeMessage(message, index = 0) {
+            if (index === 0) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message ai';
+                
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'message-avatar';
+                avatarDiv.textContent = 'AI';
+                
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'message-content';
+                contentDiv.id = 'typing-message';
+                
+                messageDiv.appendChild(avatarDiv);
+                messageDiv.appendChild(contentDiv);
+                chatMessages.appendChild(messageDiv);
+            }
+
+            const typingMessage = document.getElementById('typing-message');
+            
+            if (index < message.length) {
+                typingMessage.textContent = message.substring(0, index + 1);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                setTimeout(() => typeMessage(message, index + 1), 50);
+            } else {
+                typingMessage.removeAttribute('id');
+                isTyping = false;
+                sendBtn.disabled = false;
+                userInput.disabled = false;
+                userInput.focus();
+            }
+        }
+
+        function sendMessage() {
+            const message = userInput.value.trim();
+            
+            if (message === '' || isTyping) return;
+            
+            addMessage(message, true);
+            userInput.value = '';
+            
+            isTyping = true;
+            sendBtn.disabled = true;
+            userInput.disabled = true;
+            
+            // 显示思考过程
+            showThinking();
+            
+            setTimeout(() => {
+                // 移除思考过程
+                removeThinking();
+                const response = aiResponses[currentResponseIndex];
+                typeMessage(response);
+                currentResponseIndex = (currentResponseIndex + 1) % aiResponses.length;
+            }, 1000);
+        }
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                showThinking();
+                setTimeout(() => {
+                    removeThinking();
+                    const response = aiResponses[currentResponseIndex];
+                    typeMessage(response);
+                    currentResponseIndex = (currentResponseIndex + 1) % aiResponses.length;
+                }, 2500);
+            }, 800);
+        });
+
+        const studentInfoContainer = document.getElementById('studentInfoContainer');
+        const studentInfoForm = document.getElementById('studentInfoForm');
+        const studentErrorMessage = document.getElementById('studentErrorMessage');
+        const startTestBtn = document.getElementById('startTestBtn');
+        const chatContainer = document.getElementById('chatContainer');
+        const surveyContainer = document.getElementById('surveyContainer');
+        const backBtn = document.getElementById('backBtn');
+        const surveyForm = document.getElementById('surveyForm');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+
+        let studentInfo = {};
+
+        studentInfoForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(studentInfoForm);
+            const studentId = formData.get('studentId').trim();
+            const gender = formData.get('gender');
+            const age = formData.get('age');
+            const className = formData.get('className').trim();
+
+            if (!studentId || !gender || !age || !className) {
+                studentErrorMessage.style.display = 'block';
+                return;
+            }
+
+            studentInfo = {
+                studentId: studentId,
+                gender: gender,
+                age: parseInt(age),
+                className: className
+            };
+
+            studentErrorMessage.style.display = 'none';
+            
+            // 显示选择讲解方式的弹窗
+            const instructionModal = document.getElementById('instructionModal');
+            instructionModal.style.display = 'flex';
+            
+            // 处理弹窗选项选择
+            const modalOptions = document.querySelectorAll('.modal-option');
+            let selectedInstruction = null;
+            
+            modalOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    modalOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedInstruction = option.getAttribute('data-value');
+                });
+            });
+            
+            // 处理确认按钮
+            document.getElementById('modalConfirm').addEventListener('click', () => {
+                if (selectedInstruction) {
+                    studentInfo.instructionType = selectedInstruction;
+                    instructionModal.style.display = 'none';
+                    studentInfoContainer.style.display = 'none';
+                    
+                    if (selectedInstruction === 'AI讲解') {
+                        chatContainer.style.display = 'flex';
+                        startTestBtn.style.display = 'block';
+                        teacherContainer.style.display = 'none';
+                        document.getElementById('teacherStartTestBtn').style.display = 'none';
+                    } else if (selectedInstruction === '教师讲解') {
+                        teacherContainer.style.display = 'flex';
+                        chatContainer.style.display = 'none';
+                        startTestBtn.style.display = 'none';
+                        document.getElementById('teacherStartTestBtn').style.display = 'block';
+                    }
+                }
+            });
+            
+            // 处理取消按钮
+            document.getElementById('modalCancel').addEventListener('click', () => {
+                instructionModal.style.display = 'none';
+            });
+        });
+
+        startTestBtn.addEventListener('click', () => {
+            chatContainer.style.display = 'none';
+            surveyContainer.style.display = 'block';
+            startTestBtn.style.display = 'none';
+        });
+
+        const teacherContainer = document.getElementById('teacherContainer');
+        const aiAcknowledgeBtn = document.getElementById('aiAcknowledgeBtn');
+        const teacherAcknowledgeBtn = document.getElementById('teacherAcknowledgeBtn');
+
+        backBtn.addEventListener('click', () => {
+            surveyContainer.style.display = 'none';
+            chatContainer.style.display = 'flex';
+            startTestBtn.style.display = 'block';
+            errorMessage.style.display = 'none';
+            successMessage.style.display = 'none';
+        });
+
+        // 处理AI讲解页面的"我已知晓"按钮
+        aiAcknowledgeBtn.addEventListener('click', () => {
+            chatContainer.style.display = 'none';
+            teacherContainer.style.display = 'flex';
+            startTestBtn.style.display = 'none';
+            document.getElementById('teacherStartTestBtn').style.display = 'block';
+            // 移除教师讲解页面的"我已知晓"按钮
+            teacherAcknowledgeBtn.style.display = 'none';
+        });
+
+        // 处理教师讲解页面的"我已知晓"按钮
+        teacherAcknowledgeBtn.addEventListener('click', () => {
+            teacherContainer.style.display = 'none';
+            chatContainer.style.display = 'flex';
+            startTestBtn.style.display = 'block';
+            document.getElementById('teacherStartTestBtn').style.display = 'none';
+            // 移除AI讲解页面的"我已知晓"按钮
+            aiAcknowledgeBtn.style.display = 'none';
+        });
+
+        // 处理教师讲解页面的开始测试按钮
+        document.getElementById('teacherStartTestBtn').addEventListener('click', () => {
+            teacherContainer.style.display = 'none';
+            surveyContainer.style.display = 'block';
+            document.getElementById('teacherStartTestBtn').style.display = 'none';
+        });
+
+        surveyForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(surveyForm);
+            const answers = {};
+            let allAnswered = true;
+
+            // 检查新增的两道题
+            const q0_1 = formData.get('q0_1');
+            const q0_2 = formData.get('q0_2');
+            if (!q0_1 || !q0_2) {
+                allAnswered = false;
+            }
+            answers['耳鸣消除方法'] = parseInt(q0_1);
+            answers['AI使用频率'] = parseInt(q0_2);
+
+            // 检查原有的6道题
+            for (let i = 1; i <= 6; i++) {
+                const value = formData.get(`q${i}`);
+                if (!value) {
+                    allAnswered = false;
+                    break;
+                }
+                answers[`问题${i}`] = parseInt(value);
+            }
+
+            // 检查性格特点的8道题
+            for (let i = 1; i <= 8; i++) {
+                const value = formData.get(`p${i}`);
+                if (!value) {
+                    allAnswered = false;
+                    break;
+                }
+                answers[`性格题目${i}`] = parseInt(value);
+            }
+
+            if (!allAnswered) {
+                errorMessage.style.display = 'block';
+                successMessage.style.display = 'none';
+                return;
+            }
+
+            errorMessage.style.display = 'none';
+            
+            const timestamp = new Date().toISOString();
+            const surveyData = {
+                timestamp: timestamp,
+                studentInfo: studentInfo,
+                answers: answers
+            };
+
+            const jsonData = JSON.stringify(surveyData, null, 2);
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${studentInfo.studentId}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            const csvData = '学号,性别,年龄,班级,讲解方式,耳鸣消除方法,AI使用频率,时间戳,问题1,问题2,问题3,问题4,问题5,问题6,性格题目1,性格题目2,性格题目3,性格题目4,性格题目5,性格题目6,性格题目7,性格题目8\n' + 
+                studentInfo.studentId + ',' +
+                studentInfo.gender + ',' +
+                studentInfo.age + ',' +
+                studentInfo.className + ',' +
+                (studentInfo.instructionType || '') + ',' +
+                answers['耳鸣消除方法'] + ',' +
+                answers['AI使用频率'] + ',' +
+                timestamp + ',' +
+                answers['问题1'] + ',' +
+                answers['问题2'] + ',' +
+                answers['问题3'] + ',' +
+                answers['问题4'] + ',' +
+                answers['问题5'] + ',' +
+                answers['问题6'] + ',' +
+                answers['性格题目1'] + ',' +
+                answers['性格题目2'] + ',' +
+                answers['性格题目3'] + ',' +
+                answers['性格题目4'] + ',' +
+                answers['性格题目5'] + ',' +
+                answers['性格题目6'] + ',' +
+                answers['性格题目7'] + ',' +
+                answers['性格题目8'] + '\n';
+            
+            const csvBlob = new Blob(['\ufeff' + csvData], { type: 'text/csv;charset=utf-8;' });
+            const csvUrl = URL.createObjectURL(csvBlob);
+            const csvA = document.createElement('a');
+            csvA.href = csvUrl;
+            csvA.download = `${studentInfo.studentId}.csv`;
+            document.body.appendChild(csvA);
+            csvA.click();
+            document.body.removeChild(csvA);
+            URL.revokeObjectURL(csvUrl);
+
+            successMessage.style.display = 'block';
+            surveyForm.reset();
+        });
+    </script>
+</body>
+</html>
