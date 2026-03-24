@@ -821,7 +821,7 @@
         <div class="teacher-content">
             <div class="teacher-message">
                 <p>由于太阳穴的血供和耳朵存在联系，按住太阳穴可以减少血液对耳朵神经的供给，重置耳朵的状态。因此按太阳穴一段时间以后耳鸣即可消失。</p>
-                <p class="signature">— 李子奇段长</p>
+                <p class="signature">— 某某教师</p>
             </div>
             <div style="display: flex; gap: 15px; margin-top: 30px;">
                 <button class="acknowledge-btn" id="teacherAcknowledgeBtn">我已知晓</button>
